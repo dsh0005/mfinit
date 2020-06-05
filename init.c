@@ -3,6 +3,9 @@
 #include <unistd.h>
 #include <sys/wait.h>
 
+#define RC_PATH "/etc/"
+#define RC_FILENAME "rc"
+
 int main(void)
 {
 	sigset_t set;
@@ -21,6 +24,6 @@ int main(void)
 
 	if (setsid() == (pid_t)-1) return 6;
 	if (setpgid(0, 0)) return 7;
-	(void)execve("/etc/rc", (char * const []){ "rc", 0 }, (char * const[]){ 0 });
+	(void)execve(RC_PATH RC_FILENAME, (char * const []){ RC_FILENAME, 0 }, (char * const[]){ 0 });
 	return 8;
 }
