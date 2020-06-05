@@ -1,8 +1,9 @@
 #define _XOPEN_SOURCE 700
 #include <signal.h>
 #include <unistd.h>
+#include <sys/wait.h>
 
-int main()
+int main(void)
 {
 	sigset_t set;
 	int status;
