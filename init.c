@@ -10,14 +10,17 @@ int main(void)
 
 	if (getpid() != 1) return 1;
 
-	sigfillset(&set);
-	sigprocmask(SIG_BLOCK, &set, 0);
+	if (sigfillset(&set)) return 2;
+	if (sigprocmask(SIG_BLOCK, &set, 0)) return 3;
 
-	if (fork()) for (;;) wait(&status);
+  status = fork();
+  if (status == -1) return 4;
+	else if (status) for (;;) wait(&status);
 
-	sigprocmask(SIG_UNBLOCK, &set, 0);
+	if (sigprocmask(SIG_UNBLOCK, &set, 0)) return 5;
 
-	setsid();
-	setpgid(0, 0);
-	return execve("/etc/rc", (char *[]){ "rc", 0 }, (char *[]){ 0 });
+	if (setsid() == (pid_t)-1) return 6;
+	if (setpgid(0, 0)) return 7;
+	(void)execve("/etc/rc", (char * const []){ "rc", 0 }, (char * const[]){ 0 });
+  return 8;
 }
