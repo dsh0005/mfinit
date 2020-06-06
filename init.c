@@ -17,19 +17,19 @@ void _start(void)
 {
 	sigset_t set;
 	int status;
-    siginfo_t dummy;
-    size_t i;
-    char * const set_c = (char*)&set;
+	siginfo_t dummy;
+	size_t i;
+	char * const set_c = (char*)&set;
 
 	if (syscall(SYS_getpid) != 1) (void)syscall(SYS_exit, 1);
-    for (i = 0; i < sizeof(sigset_t); i++)
-        set_c[i] = ~0;
-#   ifdef SIGCANCEL
-        set->__val[((SIGCANCEL)-1)/(8*sizeof(unsigned long))] &= ~(1UL << (((SIGCANCEL-1))%(8*sizeof(unsigned long))));
-#   endif
-#   ifdef SIGSETXID
-        set->__val[((SIGSETXID)-1)/(8*sizeof(unsigned long))] &= ~(1UL << (((SIGSETXID-1))%(8*sizeof(unsigned long))));
-#   endif
+	for (i = 0; i < sizeof(sigset_t); i++)
+		set_c[i] = ~0;
+#	ifdef SIGCANCEL
+		set->__val[((SIGCANCEL)-1)/(8*sizeof(unsigned long))] &= ~(1UL << (((SIGCANCEL-1))%(8*sizeof(unsigned long))));
+#	endif
+#	ifdef SIGSETXID
+		set->__val[((SIGSETXID)-1)/(8*sizeof(unsigned long))] &= ~(1UL << (((SIGSETXID-1))%(8*sizeof(unsigned long))));
+#	endif
 	if (syscall(SYS_rt_sigprocmask, SIG_BLOCK, &set, 0, sizeof(sigset_t))) (void)syscall(SYS_exit, 3);
 
 	status = syscall(SYS_fork);
