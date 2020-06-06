@@ -9,67 +9,60 @@
 #if defined(REALLY_MINIMAL) && REALLY_MINIMAL != 0
 #define _GNU_SOURCE
 #include <sys/syscall.h>
+extern int syscall(int, ...);
 #endif
-
-#if defined(REALLY_MINIMAL) && REALLY_MINIMAL != 0
-void
-#else
-int
-#endif
-impl(void);
-
-void sc_impl(void);
 
 #if defined(REALLY_MINIMAL) && REALLY_MINIMAL != 0
 void _start(void)
 {
-	sc_impl();
+	sigset_t set;
+	int status;
+    siginfo_t dummy;
+    size_t i;
+    char * const set_c = (char*)&set;
+
+	if (syscall(SYS_getpid) != 1) (void)syscall(SYS_exit, 1);
+    for (i = 0; i < sizeof(sigset_t); i++)
+        set_c[i] = ~0;
+#   ifdef SIGCANCEL
+        set->__val[((SIGCANCEL)-1)/(8*sizeof(unsigned long))] &= ~(1UL << (((SIGCANCEL-1))%(8*sizeof(unsigned long))));
+#   endif
+#   ifdef SIGSETXID
+        set->__val[((SIGSETXID)-1)/(8*sizeof(unsigned long))] &= ~(1UL << (((SIGSETXID-1))%(8*sizeof(unsigned long))));
+#   endif
+	if (syscall(SYS_rt_sigprocmask, SIG_BLOCK, &set, 0, sizeof(sigset_t))) (void)syscall(SYS_exit, 3);
+
+	status = syscall(SYS_fork);
+	if (status == -1) (void)syscall(SYS_exit, 4);
+	else if (status) for (;;) (void)syscall(SYS_waitid, P_ALL, 0, &dummy, WEXITED);
+
+	if (syscall(SYS_rt_sigprocmask, SIG_UNBLOCK, &set, 0, sizeof(sigset_t))) (void)syscall(SYS_exit, 5);
+
+	if (syscall(SYS_setsid) == (pid_t)-1) (void)syscall(SYS_exit, 6);
+	if (syscall(SYS_setpgid, 0, 0)) (void)syscall(SYS_exit, 7);
+	(void)syscall(SYS_execve, RC_PATH RC_FILENAME, (char * const []){ RC_FILENAME, 0 }, (char * const[]){ 0 });
+	(void)syscall(SYS_exit, 8);
 }
 #else
 int main(void)
 {
-	return impl();
-}
-#endif
-
-/* Helper macros for our really minimal config. */
-#if defined(REALLY_MINIMAL) && REALLY_MINIMAL != 0
-# define EXIT_VALUE(x) _exit(x)
-#else
-# define EXIT_VALUE(x) return x
-#endif
-
-void sc_impl(void)
-{
 	sigset_t set;
 	int status;
 
-	if (syscall(SYS_getpid) != 1) EXIT_VALUE(1);
-}
+	if (getpid() != 1) return 1;
 
-#if defined(REALLY_MINIMAL) && REALLY_MINIMAL != 0
-void
-#else
-int
-#endif
-impl(void)
-{
-	sigset_t set;
-	int status;
-
-	if (getpid() != 1) EXIT_VALUE(1);
-
-	if (sigfillset(&set)) EXIT_VALUE(2);
-	if (sigprocmask(SIG_BLOCK, &set, 0)) EXIT_VALUE(3);
+	if (sigfillset(&set)) return 2;
+	if (sigprocmask(SIG_BLOCK, &set, 0)) return 3;
 
 	status = fork();
-	if (status == -1) EXIT_VALUE(4);
+	if (status == -1) return 4;
 	else if (status) for (;;) wait(&status);
 
-	if (sigprocmask(SIG_UNBLOCK, &set, 0)) EXIT_VALUE(5);
+	if (sigprocmask(SIG_UNBLOCK, &set, 0)) return 5;
 
-	if (setsid() == (pid_t)-1) EXIT_VALUE(6);
-	if (setpgid(0, 0)) EXIT_VALUE(7);
+	if (setsid() == (pid_t)-1) return 6;
+	if (setpgid(0, 0)) return 7;
 	(void)execve(RC_PATH RC_FILENAME, (char * const []){ RC_FILENAME, 0 }, (char * const[]){ 0 });
-	EXIT_VALUE(8);
+	return 8;
 }
+#endif
