@@ -48,6 +48,8 @@ int main(void)
 {
 	sigset_t set;
 	int status;
+	char * const rc_args[] = { RC_FILENAME, 0 };
+	char * const rc_env[] = { 0 };
 
 	if (getpid() != 1) return 1;
 
@@ -62,7 +64,7 @@ int main(void)
 
 	if (setsid() == (pid_t)-1) return 6;
 	if (setpgid(0, 0)) return 7;
-	(void)execve(RC_PATH RC_FILENAME, (char * const []){ RC_FILENAME, 0 }, (char * const[]){ 0 });
+	(void)execve(RC_PATH RC_FILENAME, rc_args, rc_env);
 	return 8;
 }
 #endif
