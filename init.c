@@ -56,7 +56,7 @@ int main(void)
 
 	status = fork();
 	if (status == -1) return 4;
-	else if (status) for (;;) wait(&status);
+	else if (status) for (;;) (void)wait(&status);
 
 	if (sigprocmask(SIG_UNBLOCK, &set, 0)) return 5;
 
