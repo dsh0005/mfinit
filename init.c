@@ -20,15 +20,17 @@ void _start(void)
 	siginfo_t dummy;
 	size_t i;
 	char * const set_c = (char*)&set;
+	char * const rc_args[] = { RC_FILENAME, 0 };
+	char * const rc_env[] = { 0 };
 
 	if (syscall(SYS_getpid) != 1) (void)syscall(SYS_exit, 1);
 	for (i = 0; i < sizeof(sigset_t); i++)
-		set_c[i] = ~0;
+		set_c[i] = '\xff';
 #	ifdef SIGCANCEL
-		set->__val[((SIGCANCEL)-1)/(8*sizeof(unsigned long))] &= ~(1UL << (((SIGCANCEL-1))%(8*sizeof(unsigned long))));
+		set.__val[((SIGCANCEL)-1)/(8*sizeof(unsigned long))] &= ~(1UL << (((SIGCANCEL-1))%(8*sizeof(unsigned long))));
 #	endif
 #	ifdef SIGSETXID
-		set->__val[((SIGSETXID)-1)/(8*sizeof(unsigned long))] &= ~(1UL << (((SIGSETXID-1))%(8*sizeof(unsigned long))));
+		set.__val[((SIGSETXID)-1)/(8*sizeof(unsigned long))] &= ~(1UL << (((SIGSETXID-1))%(8*sizeof(unsigned long))));
 #	endif
 	if (syscall(SYS_rt_sigprocmask, SIG_BLOCK, &set, 0, sizeof(sigset_t))) (void)syscall(SYS_exit, 3);
 
@@ -40,7 +42,7 @@ void _start(void)
 
 	if (syscall(SYS_setsid) == (pid_t)-1) (void)syscall(SYS_exit, 6);
 	if (syscall(SYS_setpgid, 0, 0)) (void)syscall(SYS_exit, 7);
-	(void)syscall(SYS_execve, RC_PATH RC_FILENAME, (char * const []){ RC_FILENAME, 0 }, (char * const[]){ 0 });
+	(void)syscall(SYS_execve, RC_PATH RC_FILENAME, rc_args, rc_env);
 	(void)syscall(SYS_exit, 8);
 }
 #else
