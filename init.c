@@ -23,6 +23,5 @@ int main(void)
 
 	if (setsid() == (pid_t)-1) return 6;
 	if (setpgid(0, 0)) return 7;
-	(void)execve(RC_PATH RC_FILENAME, rc_args, rc_env);
-	return 8;
+	return execve(RC_PATH RC_FILENAME, rc_args, rc_env);
 }
