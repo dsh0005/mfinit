@@ -7,12 +7,88 @@
 #define RC_FILENAME "rc"
 
 #if defined(REALLY_MINIMAL) && REALLY_MINIMAL != 0
-#define _GNU_SOURCE
 #include <sys/syscall.h>
-extern int syscall(int, ...);
 #endif
 
 #if defined(REALLY_MINIMAL) && REALLY_MINIMAL != 0
+
+#ifndef __x86_64__
+#error "can't do really minimal on anything but x64"
+#endif
+
+static inline pid_t sc_getpid(void){
+	pid_t ret;
+	__asm__("syscall"
+		: "=a" (ret)
+		: "a" (SYS_getpid)
+		: "rcx", "r11");
+	return ret;
+}
+
+static inline void sc_exit(int code){
+	__asm__ __volatile__("syscall"
+		:
+		: "a" (SYS_exit), "D" (code)
+		: "rcx", "r11");
+}
+
+static inline int sc_rt_sigprocmask(int how, sigset_t *nset, sigset_t *oset, size_t sigsetsize){
+	int ret;
+	register long r10 __asm__("r10") = sigsetsize;
+	__asm__("syscall"
+		: "=a" (ret)
+		: "a" (SYS_rt_sigprocmask), "D" (how), "S" (nset), "d" (oset), "r" (r10)
+		: "memory", "rcx", "r11");
+	return ret;
+}
+
+static inline pid_t sc_fork(void){
+	pid_t ret;
+	__asm__ __volatile__("syscall"
+		: "=a" (ret)
+		: "a" (SYS_fork)
+		: "memory", "rcx", "r11");
+	return ret;
+}
+
+static inline int sc_waitid(int which, pid_t upid, siginfo_t * infop, int options){
+	int ret;
+	register struct rusage *ru __asm__("r8") = NULL;
+	register int r10 __asm__("r10") = options;
+	__asm__ __volatile__("syscall"
+		: "=a" (ret)
+		: "a" (SYS_waitid), "D" (which), "S" (upid), "d" (infop), "r" (r10), "r" (ru)
+		: "memory", "rcx", "r11");
+	return ret;
+}
+
+static inline pid_t sc_setsid(void){
+	pid_t ret;
+	__asm__ __volatile__("syscall"
+		: "=a" (ret)
+		: "a" (SYS_setsid)
+		: "memory", "rcx", "r11");
+	return ret;
+}
+
+static inline int sc_setpgid(pid_t pid, pid_t pgid){
+	int ret;
+	__asm__ __volatile__("syscall"
+		: "=a" (ret)
+		: "a" (SYS_setpgid), "D" (pid), "S" (pgid)
+		: "memory", "rcx", "r11");
+	return ret;
+}
+
+static inline int sc_execve(const char *filename, char * const * argv, char * const * envp){
+	int ret;
+	__asm__ __volatile__("syscall"
+		: "=a" (ret)
+		: "a" (SYS_execve), "D" (filename), "S" (argv), "d" (envp)
+		: "memory", "rcx", "r11");
+	return ret;
+}
+
 void _start(void)
 {
 	sigset_t set;
@@ -23,7 +99,7 @@ void _start(void)
 	char * const rc_args[] = { RC_FILENAME, 0 };
 	char * const rc_env[] = { 0 };
 
-	if (syscall(SYS_getpid) != 1) (void)syscall(SYS_exit, 1);
+	if (sc_getpid() != 1) (void)sc_exit(1);
 	for (i = 0; i < sizeof(sigset_t); i++)
 		set_c[i] = '\xff';
 #	ifdef SIGCANCEL
@@ -32,18 +108,18 @@ void _start(void)
 #	ifdef SIGSETXID
 		set.__val[((SIGSETXID)-1)/(8*sizeof(unsigned long))] &= ~(1UL << (((SIGSETXID-1))%(8*sizeof(unsigned long))));
 #	endif
-	if (syscall(SYS_rt_sigprocmask, SIG_BLOCK, &set, 0, sizeof(sigset_t))) (void)syscall(SYS_exit, 3);
+	if (sc_rt_sigprocmask(SIG_BLOCK, &set, 0, sizeof(sigset_t))) (void)sc_exit(3);
 
-	status = syscall(SYS_fork);
-	if (status == -1) (void)syscall(SYS_exit, 4);
-	else if (status) for (;;) (void)syscall(SYS_waitid, P_ALL, 0, &dummy, WEXITED);
+	status = sc_fork();
+	if (status == -1) (void)sc_exit(4);
+	else if (status) for (;;) (void)sc_waitid(P_ALL, 0, &dummy, WEXITED);
 
-	if (syscall(SYS_rt_sigprocmask, SIG_UNBLOCK, &set, 0, sizeof(sigset_t))) (void)syscall(SYS_exit, 5);
+	if (sc_rt_sigprocmask(SIG_UNBLOCK, &set, 0, sizeof(sigset_t))) (void)sc_exit(5);
 
-	if (syscall(SYS_setsid) == (pid_t)-1) (void)syscall(SYS_exit, 6);
-	if (syscall(SYS_setpgid, 0, 0)) (void)syscall(SYS_exit, 7);
-	(void)syscall(SYS_execve, RC_PATH RC_FILENAME, rc_args, rc_env);
-	(void)syscall(SYS_exit, 8);
+	if (sc_setsid() == (pid_t)-1) (void)sc_exit(6);
+	if (sc_setpgid(0, 0)) (void)sc_exit(7);
+	(void)sc_execve(RC_PATH RC_FILENAME, rc_args, rc_env);
+	(void)sc_exit(8);
 }
 #else
 int main(void)
