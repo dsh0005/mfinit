@@ -27,11 +27,12 @@ sfi pid_t sc_getpid(void){
 	return ret;
 }
 
-sfi void sc_exit(int code){
+__attribute__((noreturn)) sfi void sc_exit(int code){
 	__asm__ __volatile__("syscall"
 		:
 		: "a" (SYS_exit), "D" (code)
 		: "rcx", "r11");
+	__builtin_unreachable();
 }
 
 sfi int sc_rt_sigprocmask(int how, sigset_t *nset, sigset_t *oset, size_t sigsetsize){
