@@ -16,7 +16,9 @@
 #error "can't do really minimal on anything but x64"
 #endif
 
-static inline pid_t sc_getpid(void){
+#define sfi __attribute__((always_inline)) static inline
+
+sfi pid_t sc_getpid(void){
 	pid_t ret;
 	__asm__("syscall"
 		: "=a" (ret)
@@ -25,14 +27,14 @@ static inline pid_t sc_getpid(void){
 	return ret;
 }
 
-static inline void sc_exit(int code){
+sfi void sc_exit(int code){
 	__asm__ __volatile__("syscall"
 		:
 		: "a" (SYS_exit), "D" (code)
 		: "rcx", "r11");
 }
 
-static inline int sc_rt_sigprocmask(int how, sigset_t *nset, sigset_t *oset, size_t sigsetsize){
+sfi int sc_rt_sigprocmask(int how, sigset_t *nset, sigset_t *oset, size_t sigsetsize){
 	int ret;
 	register long r10 __asm__("r10") = sigsetsize;
 	__asm__("syscall"
@@ -42,7 +44,7 @@ static inline int sc_rt_sigprocmask(int how, sigset_t *nset, sigset_t *oset, siz
 	return ret;
 }
 
-static inline pid_t sc_fork(void){
+sfi pid_t sc_fork(void){
 	pid_t ret;
 	__asm__ __volatile__("syscall"
 		: "=a" (ret)
@@ -51,7 +53,7 @@ static inline pid_t sc_fork(void){
 	return ret;
 }
 
-static inline int sc_waitid(int which, pid_t upid, siginfo_t * infop, int options){
+sfi int sc_waitid(int which, pid_t upid, siginfo_t * infop, int options){
 	int ret;
 	register struct rusage *ru __asm__("r8") = NULL;
 	register int r10 __asm__("r10") = options;
@@ -62,7 +64,7 @@ static inline int sc_waitid(int which, pid_t upid, siginfo_t * infop, int option
 	return ret;
 }
 
-static inline pid_t sc_setsid(void){
+sfi pid_t sc_setsid(void){
 	pid_t ret;
 	__asm__ __volatile__("syscall"
 		: "=a" (ret)
@@ -71,7 +73,7 @@ static inline pid_t sc_setsid(void){
 	return ret;
 }
 
-static inline int sc_setpgid(pid_t pid, pid_t pgid){
+sfi int sc_setpgid(pid_t pid, pid_t pgid){
 	int ret;
 	__asm__ __volatile__("syscall"
 		: "=a" (ret)
@@ -80,7 +82,7 @@ static inline int sc_setpgid(pid_t pid, pid_t pgid){
 	return ret;
 }
 
-static inline int sc_execve(const char *filename, char * const * argv, char * const * envp){
+sfi int sc_execve(const char *filename, char * const * argv, char * const * envp){
 	int ret;
 	__asm__ __volatile__("syscall"
 		: "=a" (ret)
