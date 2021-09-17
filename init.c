@@ -38,7 +38,7 @@ __attribute__((noreturn)) sfi void sc_exit(int code){
 sfi int sc_rt_sigprocmask(int how, sigset_t *nset, sigset_t *oset, size_t sigsetsize){
 	int ret;
 	register long r10 __asm__("r10") = sigsetsize;
-	__asm__("syscall"
+	__asm__ __volatile__("syscall"
 		: "=a" (ret)
 		: "0" (SYS_rt_sigprocmask), "D" (how), "S" (nset), "d" (oset), "r" (r10)
 		: "memory", "rcx", "r11");
