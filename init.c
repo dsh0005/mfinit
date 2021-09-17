@@ -22,7 +22,7 @@ sfi pid_t sc_getpid(void){
 	pid_t ret;
 	__asm__("syscall"
 		: "=a" (ret)
-		: "a" (SYS_getpid)
+		: "0" (SYS_getpid)
 		: "rcx", "r11");
 	return ret;
 }
@@ -40,7 +40,7 @@ sfi int sc_rt_sigprocmask(int how, sigset_t *nset, sigset_t *oset, size_t sigset
 	register long r10 __asm__("r10") = sigsetsize;
 	__asm__("syscall"
 		: "=a" (ret)
-		: "a" (SYS_rt_sigprocmask), "D" (how), "S" (nset), "d" (oset), "r" (r10)
+		: "0" (SYS_rt_sigprocmask), "D" (how), "S" (nset), "d" (oset), "r" (r10)
 		: "memory", "rcx", "r11");
 	return ret;
 }
@@ -49,7 +49,7 @@ sfi pid_t sc_fork(void){
 	pid_t ret;
 	__asm__ __volatile__("syscall"
 		: "=a" (ret)
-		: "a" (SYS_fork)
+		: "0" (SYS_fork)
 		: "memory", "rcx", "r11");
 	return ret;
 }
@@ -60,7 +60,7 @@ sfi int sc_waitid(int which, pid_t upid, siginfo_t * infop, int options){
 	register int r10 __asm__("r10") = options;
 	__asm__ __volatile__("syscall"
 		: "=a" (ret)
-		: "a" (SYS_waitid), "D" (which), "S" (upid), "d" (infop), "r" (r10), "r" (ru)
+		: "0" (SYS_waitid), "D" (which), "S" (upid), "d" (infop), "r" (r10), "r" (ru)
 		: "memory", "rcx", "r11");
 	return ret;
 }
@@ -69,7 +69,7 @@ sfi pid_t sc_setsid(void){
 	pid_t ret;
 	__asm__ __volatile__("syscall"
 		: "=a" (ret)
-		: "a" (SYS_setsid)
+		: "0" (SYS_setsid)
 		: "memory", "rcx", "r11");
 	return ret;
 }
@@ -78,7 +78,7 @@ sfi int sc_setpgid(pid_t pid, pid_t pgid){
 	int ret;
 	__asm__ __volatile__("syscall"
 		: "=a" (ret)
-		: "a" (SYS_setpgid), "D" (pid), "S" (pgid)
+		: "0" (SYS_setpgid), "D" (pid), "S" (pgid)
 		: "memory", "rcx", "r11");
 	return ret;
 }
@@ -87,7 +87,7 @@ sfi int sc_execve(const char *filename, char * const * argv, char * const * envp
 	int ret;
 	__asm__ __volatile__("syscall"
 		: "=a" (ret)
-		: "a" (SYS_execve), "D" (filename), "S" (argv), "d" (envp)
+		: "0" (SYS_execve), "D" (filename), "S" (argv), "d" (envp)
 		: "memory", "rcx", "r11");
 	return ret;
 }
